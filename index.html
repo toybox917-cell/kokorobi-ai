@@ -4,76 +4,115 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>心灯AI</title>
+
   <style>
-    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;max-width:720px;margin:24px auto;padding:0 14px;line-height:1.6}
-    h1{font-size:22px;margin:0 0 12px}
-    .box{border:1px solid #ddd;border-radius:12px;padding:12px}
-    textarea{width:100%;min-height:110px;border:1px solid #ccc;border-radius:10px;padding:10px;font-size:16px}
-    button{border:0;border-radius:10px;padding:10px 14px;font-size:16px;cursor:pointer}
-    .row{display:flex;gap:10px;align-items:center;margin-top:10px}
-    .muted{color:#666;font-size:13px}
-    pre{white-space:pre-wrap;word-break:break-word;background:#fafafa;border:1px solid #eee;border-radius:12px;padding:12px;margin-top:12px}
+    body{
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN",
+        "Yu Gothic", sans-serif;
+      max-width:720px;
+      margin:32px auto;
+      padding:0 16px;
+      line-height:1.7;
+      background:#fff;
+    }
+    h1{font-size:24px;margin-bottom:12px}
+    .box{
+      border:1px solid #ddd;
+      border-radius:14px;
+      padding:16px;
+    }
+    textarea{
+      width:100%;
+      min-height:120px;
+      border:1px solid #ccc;
+      border-radius:10px;
+      padding:12px;
+      font-size:16px;
+      resize:vertical;
+    }
+    button{
+      border:0;
+      border-radius:10px;
+      padding:10px 18px;
+      font-size:16px;
+      cursor:pointer;
+      background:#f0f0f0;
+    }
+    button:hover{background:#e6e6e6}
+    .row{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-top:12px;
+    }
+    .muted{
+      color:#666;
+      font-size:13px;
+    }
+    pre{
+      white-space:pre-wrap;
+      word-break:break-word;
+      background:#fafafa;
+      border:1px solid #eee;
+      border-radius:12px;
+      padding:14px;
+      margin-top:16px;
+      min-height:60px;
+    }
   </style>
 </head>
+
 <body>
   <h1>心灯AI</h1>
 
   <div class="box">
-    <div class="muted">相談や質問を入れて「送信」。返答が表示されます。</div>
-    <textarea id="text" placeholder="例：今日ちょっと疲れました。心を整える一言がほしい。"></textarea>
+    <div class="muted">
+      相談や質問を書いて「送信」を押してください。心を整える言葉をお返しします。
+    </div>
+
+    <textarea id="text" placeholder="例：今日はちょっと疲れました。心を整える一言がほしい。"></textarea>
 
     <div class="row">
       <button id="send">送信</button>
       <span id="state" class="muted"></span>
     </div>
 
-    <pre id="out">（ここに返答が出ます）</pre>
+    <pre id="result">(ここに返答が表示されます)</pre>
   </div>
 
-  <script>
-    const ENDPOINT = "https://jaxfvwzvhvbenrcrgduy.supabase.co/functions/v1/kokorobi-ai";
+<script>
+const ENDPOINT =
+  "https://jaxfvwzvhvbenrcrgduy.supabase.co/functions/v1/kokorobi-ai";
 
-    const $text = document.getElementById("text");
-    const $send = document.getElementById("send");
-    const $out  = document.getElementById("out");
-    const $state= document.getElementById("state");
+const sendBtn = document.getElementById("send");
+const textarea = document.getElementById("text");
+const result = document.getElementById("result");
+const state = document.getElementById("state");
 
-    async function callAI() {
-      const text = ($text.value || "").trim();
-      if (!text) return;
+sendBtn.onclick = async () => {
+  const text = textarea.value.trim();
+  if (!text) return;
 
-      $send.disabled = true;
-      $state.textContent = "送信中…";
-      $out.textContent = "";
+  state.textContent = "考え中…";
+  result.textContent = "";
 
-      try {
-        const res = await fetch(ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text })
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          $out.textContent = "エラー:\n" + JSON.stringify(data, null, 2);
-          return;
-        }
-
-        // Edge Functionが { reply: "..." } で返す想定
-        $out.textContent = data.reply ?? JSON.stringify(data, null, 2);
-      } catch (e) {
-        $out.textContent = "通信エラー: " + (e?.message || e);
-      } finally {
-        $send.disabled = false;
-        $state.textContent = "";
-      }
-    }
-
-    $send.addEventListener("click", callAI);
-    $text.addEventListener("keydown", (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") callAI();
+  try {
+    const res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
     });
-  </script>
+
+    const data = await res.json();
+    result.textContent = data.reply ?? "返答が取得できませんでした";
+    state.textContent = "";
+  } catch (e) {
+    result.textContent = "通信エラーが発生しました";
+    state.textContent = "";
+  }
+};
+</script>
+
 </body>
 </html>
