@@ -4,162 +4,300 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>心灯AI</title>
-
   <style>
     body{
-      font-family:
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        "Noto Sans JP",
-        "Hiragino Kaku Gothic ProN",
-        "Yu Gothic",
-        sans-serif;
-      max-width: 720px;
-      margin: 24px auto;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      max-width: 760px;
+      margin: 28px auto;
       padding: 0 14px;
-      line-height: 1.7;
-      background:#fff;
-      color:#222;
+      line-height: 1.65;
     }
-
-    h1{
-      font-size: 26px;
-      margin-bottom: 16px;
-    }
-
+    h1{ font-size: 28px; margin: 0 0 14px; }
     .box{
-      border:1px solid #ddd;
-      border-radius:14px;
-      padding:16px;
+      border: 1px solid #e5e5e5;
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
     }
-
-    .muted{
-      color:#666;
-      font-size:14px;
-      margin-bottom:8px;
+    .muted{ color:#666; font-size: 13px; }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap: wrap; margin-top: 10px; }
+    input[type="email"]{
+      width: 320px;
+      max-width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 15px;
     }
-
     textarea{
       width:100%;
-      min-height:140px;
-      border:1px solid #ccc;
-      border-radius:12px;
-      padding:12px;
-      font-size:16px;
-      resize:vertical;
-      box-sizing:border-box;
+      min-height: 130px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 16px;
     }
-
     button{
-      border:none;
-      border-radius:12px;
-      padding:12px 18px;
-      font-size:16px;
-      cursor:pointer;
-      background:#f0f0f0;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 15px;
+      cursor: pointer;
+      background: #f1f1f1;
     }
-
-    button:hover{
-      background:#e6e6e6;
+    button.primary{ background: #eaeaea; }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
+    .pill{
+      display:inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #eee;
+      background: #fafafa;
+      font-size: 13px;
+      color:#444;
     }
-
-    .row{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-top:14px;
-    }
-
-    #state{
-      font-size:14px;
-      color:#666;
-    }
-
     pre{
-      white-space:pre-wrap;
-      word-break:break-word;
-      background:#fafafa;
-      border:1px solid #eee;
-      border-radius:12px;
-      padding:14px;
-      margin-top:16px;
-      font-size:15px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      min-height: 62px;
     }
+    .spacer{ height: 12px; }
+    .topbar{ display:flex; justify-content: space-between; align-items:center; gap: 10px; }
   </style>
 </head>
 
 <body>
-
-  <h1>心灯AI</h1>
+  <div class="topbar">
+    <h1>心灯AI</h1>
+    <div class="pill" id="ticket">残り：- 回</div>
+  </div>
 
   <div class="box">
     <div class="muted">
-      相談や質問を書いて「送信」を押してください。<br>
-      心を整える言葉をお返しします。
+      ① メールでログイン → ② 残り回数が表示 → ③ 相談を送信できます
     </div>
 
-    <textarea
-      id="text"
-      placeholder="例：好きな人がいるけど、気持ちが伝わらない"
-    ></textarea>
+    <!-- ログインUI -->
+    <div class="row" style="margin-top:12px;">
+      <input id="email" type="email" placeholder="メールアドレス（例：xxx@gmail.com）" />
+      <button id="loginBtn" class="primary">ログインリンクを送る</button>
+      <button id="logoutBtn" disabled>ログアウト</button>
+      <span id="authState" class="muted"></span>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- 相談UI -->
+    <div class="muted">相談や質問を書いて「送信」を押してください。心を整える言葉をお返しします。</div>
+    <textarea id="text" placeholder="例：好きな人がいるけど、気持ちが伝わらない"></textarea>
 
     <div class="row">
-      <button id="send">送信</button>
-      <span id="state"></span>
+      <button id="send" disabled>送信</button>
+      <span id="state" class="muted"></span>
     </div>
 
-    <pre id="result">(ここに返答が出ます)</pre>
+    <pre id="reply">(ここに返答が出ます)</pre>
   </div>
 
-<script>
-const ENDPOINT =
-  "https://jaxfvwzvhvbenrcrgduy.supabase.co/functions/v1/kokorobi-ai";
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-const sendBtn = document.getElementById("send");
-const textEl  = document.getElementById("text");
-const result  = document.getElementById("result");
-const state   = document.getElementById("state");
+  <script>
+    // =========================
+    // 設定（ここだけ差し替え）
+    // =========================
+    const SUPABASE_URL = "https://jaxfvwzvhvbenrcrgduy.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_1MOnC3nmYzLMuswWc6qgvw_AaEjxE6W";
 
-sendBtn.onclick = async () => {
-  const text = textEl.value.trim();
-  if(!text){
-    alert("文章を入力してください");
-    return;
-  }
+    // あなたの Edge Function URL（このままでOK）
+    const FUNCTION_URL = "https://jaxfvwzvhvbenrcrgduy.supabase.co/functions/v1/kokorobi-ai";
 
-  state.textContent = "考えています…";
-  result.textContent = "";
+    // =========================
+    // 初期化
+    // =========================
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  try{
-    const res = await fetch(ENDPOINT,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({ text })
+    const emailEl = document.getElementById("email");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const authStateEl = document.getElementById("authState");
+    const ticketEl = document.getElementById("ticket");
+
+    const textEl = document.getElementById("text");
+    const sendBtn = document.getElementById("send");
+    const stateEl = document.getElementById("state");
+    const replyEl = document.getElementById("reply");
+
+    let currentTicket = null;
+
+    function setAuthUI({ loggedIn, email }) {
+      if (loggedIn) {
+        authStateEl.textContent = `ログイン中：${email}`;
+        logoutBtn.disabled = false;
+      } else {
+        authStateEl.textContent = "未ログイン";
+        logoutBtn.disabled = true;
+      }
+    }
+
+    function setTicketUI(count) {
+      if (typeof count === "number") {
+        ticketEl.textContent = `残り：${count} 回`;
+      } else {
+        ticketEl.textContent = "残り：- 回";
+      }
+    }
+
+    function setSendEnabled(enabled) {
+      sendBtn.disabled = !enabled;
+    }
+
+    async function getUser() {
+      const { data, error } = await supabase.auth.getUser();
+      if (error) return null;
+      return data.user ?? null;
+    }
+
+    async function loadTicket() {
+      setTicketUI(null);
+      currentTicket = null;
+
+      const user = await getUser();
+      if (!user) {
+        setAuthUI({ loggedIn: false });
+        setSendEnabled(false);
+        ticketEl.textContent = "残り：ログインしてください";
+        return;
+      }
+
+      setAuthUI({ loggedIn: true, email: user.email });
+
+      // profiles から ticket_count 取得
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("ticket_count")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error || !data) {
+        // RLSや行未作成など
+        ticketEl.textContent = "残り：取得できません（設定中）";
+        setSendEnabled(false);
+        console.log("ticket load error:", error);
+        return;
+      }
+
+      currentTicket = data.ticket_count;
+      setTicketUI(currentTicket);
+
+      // 0回なら送れないように（まずは表示＆制御だけ）
+      setSendEnabled(currentTicket > 0);
+    }
+
+    // =========================
+    // ログイン（メールリンク）
+    // =========================
+    loginBtn.addEventListener("click", async () => {
+      const email = (emailEl.value || "").trim();
+      if (!email) {
+        authStateEl.textContent = "メールを入力してください";
+        return;
+      }
+
+      authStateEl.textContent = "送信中…";
+
+      // GitHub Pages のこのページへ戻す
+      const redirectTo = window.location.origin + window.location.pathname;
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: redirectTo }
+      });
+
+      if (error) {
+        authStateEl.textContent = "送信に失敗しました";
+        console.log(error);
+        return;
+      }
+
+      authStateEl.textContent = "ログインリンクを送信しました（メールを確認）";
     });
 
-    const data = await res.json();
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      await loadTicket();
+    });
 
-    if(data.ok){
-      result.textContent = data.reply;
-      state.textContent = "";
-    }else{
-      result.textContent =
-        "うまく返答できませんでした。\n\n" +
-        (data.openai_error || "エラーが発生しました");
-      state.textContent = "";
-    }
-  }catch(err){
-    result.textContent =
-      "通信エラーが発生しました。\n時間をおいて試してください。";
-    state.textContent = "";
-  }
-};
-</script>
+    // =========================
+    // 相談送信（Edge Function）
+    // =========================
+    sendBtn.addEventListener("click", async () => {
+      const text = (textEl.value || "").trim();
+      if (!text) return;
 
+      // ログイン必須
+      const user = await getUser();
+      if (!user) {
+        replyEl.textContent = "ログインしてください。";
+        setSendEnabled(false);
+        return;
+      }
+
+      // 残り0なら止める（まずはフロント制御）
+      if (typeof currentTicket === "number" && currentTicket <= 0) {
+        replyEl.textContent = "残り回数がありません。";
+        return;
+      }
+
+      stateEl.textContent = "送信中…";
+      replyEl.textContent = "";
+
+      try {
+        const res = await fetch(FUNCTION_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok) {
+          replyEl.textContent = "通信エラーが発生しました";
+          console.log("function error:", data);
+          stateEl.textContent = "";
+          return;
+        }
+
+        replyEl.textContent = (data && data.reply) ? data.reply : "（返答形式が想定外です）";
+        stateEl.textContent = "";
+
+        // 今は「消費」処理はまだ（次の段階で安全にやる）
+        // ただしUIだけ1減らすならここで可能（暫定）
+        // currentTicket = Math.max(0, (currentTicket ?? 1) - 1);
+        // setTicketUI(currentTicket);
+        // setSendEnabled(currentTicket > 0);
+
+      } catch (e) {
+        replyEl.textContent = "通信エラーが発生しました";
+        console.log(e);
+        stateEl.textContent = "";
+      }
+    });
+
+    // =========================
+    // ログイン状態変化で更新
+    // =========================
+    supabase.auth.onAuthStateChange(async () => {
+      await loadTicket();
+    });
+
+    // 初回
+    loadTicket();
+  </script>
 </body>
 </html>
