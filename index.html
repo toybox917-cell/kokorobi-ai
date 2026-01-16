@@ -170,7 +170,7 @@ $("btnSendLink").onclick = async () => {
   await sb.auth.signInWithOtp({
     email,
     options:{
-      emailRedirectTo: location.origin + location.pathname
+      emailRedirectTo: "https://toybox917-cell.github.io/kokorobi-ai/index.html"
     }
   });
   $("authState").textContent = "メールを確認してください";
@@ -236,3 +236,4 @@ refreshSession();
 
 </body>
 </html>
+
