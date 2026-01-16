@@ -108,12 +108,15 @@
 
 <script>
 /* ===============================
-   🔧 あなたのSupabase情報
+   🔧 あなたのSupabase情報（入替不要）
 ================================ */
 const SUPABASE_URL = "https://jaxfvwzvhvbenrcrgduy.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_1MOnC3nmYzLMuswWc6qgvw_AaEjxE6W";
 const FUNCTION_URL =
   "https://jaxfvwzvhvbenrcrgduy.supabase.co/functions/v1/kokorobi-ai";
+
+// GitHub Pagesの index.html に戻す（ここ超重要）
+const EMAIL_REDIRECT_TO = "https://toybox917-cell.github.io/kokorobi-ai/index.html";
 /* =============================== */
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -129,25 +132,31 @@ function setAuthUI(user){
     $("authState").classList.add("ok");
     $("btnLogout").disabled = false;
     $("uid").textContent = user.id;
+
+    // 残数が読み込めるまで一旦送信は止める（ここがコツ）
+    $("send").disabled = true;
   }else{
     $("authState").textContent = "未ログイン";
     $("authState").classList.remove("ok");
     $("authState").classList.add("ng");
     $("btnLogout").disabled = true;
     $("send").disabled = true;
+    $("buy").style.display = "none";
+    $("ticketMsg").textContent = "";
     $("uid").textContent = "-";
     $("tickets").textContent = "-";
+    currentTickets = 0;
   }
 }
 
 function applyTicketGate(){
+  // 未ログイン中は何もしない
   if($("uid").textContent === "-") return;
 
   if(currentTickets <= 0){
     $("send").disabled = true;
     $("buy").style.display = "inline-block";
-    $("ticketMsg").textContent =
-      "残り回数が0です。続けるには購入してください。";
+    $("ticketMsg").textContent = "残り回数が0です。続けるには購入してください。";
   }else{
     $("send").disabled = false;
     $("buy").style.display = "none";
@@ -167,13 +176,28 @@ $("btnSendLink").onclick = async () => {
   const email = $("email").value.trim();
   if(!email){ alert("メールを入力してください"); return; }
 
-  await sb.auth.signInWithOtp({
-    email,
-    options:{
-      emailRedirectTo: "https://toybox917-cell.github.io/kokorobi-ai/index.html"
-    }
-  });
-  $("authState").textContent = "メールを確認してください";
+  $("btnSendLink").disabled = true;
+  $("authState").textContent = "送信中…";
+  $("authState").classList.remove("ng");
+  $("authState").classList.add("ok");
+
+  try{
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options:{ emailRedirectTo: EMAIL_REDIRECT_TO }
+    });
+    if(error) throw error;
+
+    $("authState").textContent = "メールを確認してください";
+  }catch(e){
+    console.error(e);
+    $("authState").textContent = "送信失敗";
+    $("authState").classList.remove("ok");
+    $("authState").classList.add("ng");
+    alert("送信に失敗しました。SupabaseのEmail設定/URL設定を確認してください。");
+  }finally{
+    $("btnSendLink").disabled = false;
+  }
 };
 
 $("btnLogout").onclick = async () => {
@@ -182,16 +206,25 @@ $("btnLogout").onclick = async () => {
   $("out").textContent = "（ここに返答が出ます）";
 };
 
-/* ---------- チケット取得 ---------- */
+/* ---------- チケット取得（profiles.ticket_count） ---------- */
 async function loadTickets(){
   const { data:{ user } } = await sb.auth.getUser();
   if(!user) return;
 
-  const { data } = await sb
+  const { data, error } = await sb
     .from("profiles")
     .select("ticket_count")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  if(error){
+    console.error(error);
+    $("tickets").textContent = "取得エラー";
+    $("ticketMsg").textContent = "チケット取得でエラー。RLS（select own）の設定を確認してください。";
+    $("send").disabled = true;
+    $("buy").style.display = "inline-block";
+    return;
+  }
 
   currentTickets = data?.ticket_count ?? 0;
   $("tickets").textContent = currentTickets;
@@ -203,37 +236,62 @@ $("send").onclick = async () => {
   const text = $("text").value.trim();
   if(!text) return;
 
+  // 残り0なら、ここでも二重で止める（フロントの保険）
+  if(currentTickets <= 0){
+    applyTicketGate();
+    return;
+  }
+
   $("state").textContent = "送信中…";
+  $("send").disabled = true;
 
-  const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ alert("ログインしてください"); return; }
+  try{
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session){
+      alert("ログインしてください");
+      setAuthUI(null);
+      return;
+    }
 
-  const res = await fetch(FUNCTION_URL,{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "Authorization":"Bearer " + session.access_token
-    },
-    body:JSON.stringify({ text })
-  });
+    const res = await fetch(FUNCTION_URL,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + session.access_token
+      },
+      body:JSON.stringify({ text })
+    });
 
-  const json = await res.json();
-  $("out").textContent = json.reply || "返答がありません";
-  await loadTickets();
-  $("state").textContent = "";
+    const json = await res.json();
+    if(!res.ok){
+      throw new Error(json?.error || "通信エラー");
+    }
+
+    $("out").textContent = json.reply || "返答がありません";
+
+    // ここは「表示更新」だけ（消費処理をEdge側に入れたら自動で減る）
+    await loadTickets();
+
+  }catch(e){
+    console.error(e);
+    $("out").textContent = "通信エラーが発生しました";
+  }finally{
+    $("state").textContent = "";
+    // loadTickets() の結果でON/OFFされるけど念のため
+    applyTicketGate();
+  }
 };
 
-/* ---------- 購入（仮） ---------- */
+/* ---------- 購入（仮：後でStripe Checkoutに差し替え） ---------- */
 $("buy").onclick = () => {
-  // 後でStripe Checkout URLに差し替え
+  // TODO: Stripe Checkout URL に置き換える
   window.open("https://note.com/", "_blank");
 };
 
 /* ---------- 初期化 ---------- */
-sb.auth.onAuthStateChange(refreshSession);
+sb.auth.onAuthStateChange(() => refreshSession());
 refreshSession();
 </script>
 
 </body>
 </html>
-
