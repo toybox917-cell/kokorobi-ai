@@ -5,233 +5,234 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>心灯AI</title>
   <style>
-    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;max-width:860px;margin:26px auto;padding:0 14px;line-height:1.7}
-    h1{font-size:26px;margin:0 0 8px}
-    .muted{color:#666;font-size:13px}
-    .box{border:1px solid #ddd;border-radius:16px;padding:16px}
+    body{
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+      "Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+      max-width:820px;margin:26px auto;padding:0 14px;line-height:1.7
+    }
+    h1{font-size:24px;margin:0 0 14px}
+    .box{border:1px solid #ddd;border-radius:14px;padding:14px}
     .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
-    input,textarea{width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:12px;padding:10px;font-size:16px}
-    textarea{min-height:140px;resize:vertical}
-    button{border:0;border-radius:12px;padding:10px 14px;font-size:16px;cursor:pointer;background:#111;color:#fff}
+    input,textarea{
+      width:100%;box-sizing:border-box;border:1px solid #ccc;
+      border-radius:12px;padding:10px;font-size:16px
+    }
+    textarea{min-height:120px;resize:vertical}
+    button{
+      border:0;border-radius:12px;padding:10px 14px;
+      font-size:16px;cursor:pointer;background:#111;color:#fff
+    }
     button.secondary{background:#eee;color:#111}
     button:disabled{opacity:.5;cursor:not-allowed}
-    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:13px}
+    .muted{color:#666;font-size:13px}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid #ddd;border-radius:999px;
+      padding:6px 10px;font-size:13px
+    }
     .ok{color:#0a7}
     .ng{color:#d33}
-    pre{white-space:pre-wrap;word-break:break-word;background:#fafafa;border:1px solid #eee;border-radius:12px;padding:12px;margin-top:12px;min-height:88px}
+    pre{
+      white-space:pre-wrap;word-break:break-word;
+      background:#fafafa;border:1px solid #eee;
+      border-radius:12px;padding:12px;margin-top:12px
+    }
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
     @media(min-width:760px){.grid{grid-template-columns:1fr 1fr}}
-    .hr{border:none;border-top:1px solid #eee;margin:14px 0}
-    a{color:#111}
   </style>
 </head>
 <body>
-  <h1>心灯AI</h1>
-  <div class="muted">ここは、答えを急がなくていい場所です。</div>
 
-  <div class="box" style="margin-top:12px">
-    <div class="muted">①ログイン（メール）→ ②残り回数を確認 → ③相談を送信</div>
+<h1>心灯AI</h1>
 
-    <div class="grid" style="margin-top:12px">
-      <div>
-        <div class="muted">メールアドレス</div>
-        <input id="email" type="email" placeholder="example@gmail.com" />
-        <div class="row">
-          <button id="btnSendLink">ログインリンクを送る</button>
-          <button id="btnLogout" class="secondary" disabled>ログアウト</button>
-          <span id="authState" class="pill ng">未ログイン</span>
-        </div>
-        <div class="muted" style="margin-top:6px">
-          ※メールが届いたらリンクを開く → 自動でこのページに戻ってログイン完了
-        </div>
+<div class="box">
+
+  <div class="muted">
+    まずはログイン（メール）→ ログイン後、相談を送れます。
+  </div>
+
+  <div class="grid" style="margin-top:10px">
+    <div>
+      <div class="muted">メールアドレス</div>
+      <input id="email" type="email" placeholder="example@gmail.com" />
+
+      <div class="row">
+        <button id="btnSendLink">ログインリンクを送る</button>
+        <button id="btnLogout" class="secondary" disabled>ログアウト</button>
+        <span id="authState" class="pill ng">未ログイン</span>
       </div>
 
-      <div>
-        <div class="muted">アカウント</div>
-        <div class="pill" style="width:100%;justify-content:space-between">
-          <span>UID</span>
-          <span id="uid" class="muted">-</span>
-        </div>
-        <div class="pill" style="width:100%;justify-content:space-between;margin-top:8px">
-          <span>残り回数</span>
-          <span id="tickets" class="muted">-</span>
-        </div>
-        <div class="muted" style="margin-top:8px">
-          ※残り0のときは送信できません（購入導線はあとで追加OK）
-        </div>
+      <div class="muted" style="margin-top:6px">
+        ※届いたメールのリンクを開くと、このページに戻ってログイン完了します。
       </div>
     </div>
 
-    <hr class="hr">
+    <div>
+      <div class="muted">アカウント</div>
 
-    <div class="muted">相談や質問を書いて「送信」を押してください。心を整える言葉をお返しします。</div>
-    <textarea id="text" placeholder="例：好きな人がいるけど、気持ちが伝わらない"></textarea>
+      <div class="pill" style="width:100%;justify-content:space-between">
+        <span>UID</span>
+        <span id="uid" class="muted">-</span>
+      </div>
 
-    <div class="row">
-      <button id="send" disabled>送信</button>
-      <span id="state" class="muted"></span>
-    </div>
-
-    <pre id="out">（ここに返答が出ます）</pre>
-
-    <div class="muted" style="margin-top:10px">
-      ※テスト中は「無料10回」想定。課金(500円/10回)は後でStripe等に接続できます。
+      <div class="pill" style="width:100%;justify-content:space-between;margin-top:8px">
+        <span>残り回数</span>
+        <span id="tickets" class="muted">-</span>
+      </div>
     </div>
   </div>
 
-  <!-- Supabase JS (CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <hr style="border:none;border-top:1px solid #eee;margin:14px 0">
 
-  <script>
-    // ====== ここをあなたの値に置き換える（2か所） ======
-    const SUPABASE_URL = "https://jaxfvwzvhvbenrcrgduy.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_1MOnC3nmYzLMuswWc6qgvw_AaEjxE6W";
-    // =======================================================
+  <div class="muted">
+    相談や質問を書いて「送信」を押してください。
+  </div>
 
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <textarea id="text" placeholder="例：好きな人がいるけど、気持ちが伝わらない"></textarea>
 
-    // あなたの Edge Function URL（関数名 kokorobi-ai）
-    const FUNCTION_URL = SUPABASE_URL.replace(/\/$/, "") + "/functions/v1/kokorobi-ai";
+  <div class="row">
+    <button id="send" disabled>送信</button>
+    <button id="buy" class="secondary" style="display:none;">
+      10回分を購入する（¥500）
+    </button>
+    <span id="state" class="muted"></span>
+  </div>
 
-    const $ = (id) => document.getElementById(id);
+  <div id="ticketMsg" class="muted" style="margin-top:8px;"></div>
 
-    function setAuthUI(user){
-      if(user){
-        $("authState").textContent = "ログイン中";
-        $("authState").classList.remove("ng");
-        $("authState").classList.add("ok");
-        $("btnLogout").disabled = false;
-        $("send").disabled = false;
-        $("uid").textContent = user.id;
-      }else{
-        $("authState").textContent = "未ログイン";
-        $("authState").classList.remove("ok");
-        $("authState").classList.add("ng");
-        $("btnLogout").disabled = true;
-        $("send").disabled = true;
-        $("uid").textContent = "-";
-        $("tickets").textContent = "-";
-      }
+  <pre id="out">（ここに返答が出ます）</pre>
+</div>
+
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/* ===============================
+   🔧 あなたのSupabase情報
+================================ */
+const SUPABASE_URL = "https://jaxfvwzvhvbenrcrgduy.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_1MOnC3nmYzLMuswWc6qgvw_AaEjxE6W";
+const FUNCTION_URL =
+  "https://jaxfvwzvhvbenrcrgduy.supabase.co/functions/v1/kokorobi-ai";
+/* =============================== */
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = (id) => document.getElementById(id);
+
+let currentTickets = 0;
+
+/* ---------- UI制御 ---------- */
+function setAuthUI(user){
+  if(user){
+    $("authState").textContent = "ログイン中";
+    $("authState").classList.remove("ng");
+    $("authState").classList.add("ok");
+    $("btnLogout").disabled = false;
+    $("uid").textContent = user.id;
+  }else{
+    $("authState").textContent = "未ログイン";
+    $("authState").classList.remove("ok");
+    $("authState").classList.add("ng");
+    $("btnLogout").disabled = true;
+    $("send").disabled = true;
+    $("uid").textContent = "-";
+    $("tickets").textContent = "-";
+  }
+}
+
+function applyTicketGate(){
+  if($("uid").textContent === "-") return;
+
+  if(currentTickets <= 0){
+    $("send").disabled = true;
+    $("buy").style.display = "inline-block";
+    $("ticketMsg").textContent =
+      "残り回数が0です。続けるには購入してください。";
+  }else{
+    $("send").disabled = false;
+    $("buy").style.display = "none";
+    $("ticketMsg").textContent = "";
+  }
+}
+
+/* ---------- 認証 ---------- */
+async function refreshSession(){
+  const { data } = await sb.auth.getSession();
+  const user = data?.session?.user || null;
+  setAuthUI(user);
+  if(user) await loadTickets();
+}
+
+$("btnSendLink").onclick = async () => {
+  const email = $("email").value.trim();
+  if(!email){ alert("メールを入力してください"); return; }
+
+  await sb.auth.signInWithOtp({
+    email,
+    options:{
+      emailRedirectTo: location.origin + location.pathname
     }
+  });
+  $("authState").textContent = "メールを確認してください";
+};
 
-    async function refreshSession(){
-      const { data } = await sb.auth.getSession();
-      const user = data?.session?.user || null;
-      setAuthUI(user);
-      if(user) await loadTickets();
-    }
+$("btnLogout").onclick = async () => {
+  await sb.auth.signOut();
+  setAuthUI(null);
+  $("out").textContent = "（ここに返答が出ます）";
+};
 
-    // profiles.ticket_count を読む（Edge側が初回10回を用意してくれる前提でもOK）
-    async function loadTickets(){
-      const { data: { user } } = await sb.auth.getUser();
-      if(!user) return;
+/* ---------- チケット取得 ---------- */
+async function loadTickets(){
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user) return;
 
-      const { data, error } = await sb
-        .from("profiles")
-        .select("ticket_count")
-        .eq("user_id", user.id)
-        .maybeSingle();
+  const { data } = await sb
+    .from("profiles")
+    .select("ticket_count")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-      if(error){
-        console.error(error);
-        $("tickets").textContent = "取得エラー";
-        return;
-      }
-      $("tickets").textContent = (data?.ticket_count ?? 0);
-    }
+  currentTickets = data?.ticket_count ?? 0;
+  $("tickets").textContent = currentTickets;
+  applyTicketGate();
+}
 
-    // ---- A：マジックリンク送信
-    $("btnSendLink").addEventListener("click", async () => {
-      const email = $("email").value.trim();
-      if(!email){
-        alert("メールアドレスを入力してね");
-        return;
-      }
-      $("btnSendLink").disabled = true;
-      $("authState").textContent = "送信中…";
-      $("authState").classList.remove("ng");
-      $("authState").classList.add("ok");
+/* ---------- 送信 ---------- */
+$("send").onclick = async () => {
+  const text = $("text").value.trim();
+  if(!text) return;
 
-      try{
-        const { error } = await sb.auth.signInWithOtp({
-          email,
-          options: {
-            // GitHub PagesでもOK：今いるページに戻す
-            emailRedirectTo: window.location.origin + window.location.pathname
-          }
-        });
-        if(error) throw error;
-        $("authState").textContent = "メールを確認してね";
-      }catch(e){
-        console.error(e);
-        $("authState").textContent = "送信失敗";
-        $("authState").classList.remove("ok");
-        $("authState").classList.add("ng");
-        alert("送信に失敗しました。SupabaseのAuth設定（URL Configuration / Email）を確認してね。");
-      }finally{
-        $("btnSendLink").disabled = false;
-      }
-    });
+  $("state").textContent = "送信中…";
 
-    $("btnLogout").addEventListener("click", async () => {
-      await sb.auth.signOut();
-      setAuthUI(null);
-      $("out").textContent = "（ここに返答が出ます）";
-    });
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ alert("ログインしてください"); return; }
 
-    // ---- 返信（Edge Functionへ）
-    $("send").addEventListener("click", async () => {
-      const userText = $("text").value.trim();
-      if(!userText) return;
+  const res = await fetch(FUNCTION_URL,{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "Authorization":"Bearer " + session.access_token
+    },
+    body:JSON.stringify({ text })
+  });
 
-      $("state").textContent = "送信中…";
-      $("out").textContent = "";
+  const json = await res.json();
+  $("out").textContent = json.reply || "返答がありません";
+  await loadTickets();
+  $("state").textContent = "";
+};
 
-      try{
-        const { data: { session } } = await sb.auth.getSession();
-        const token = session?.access_token;
-        if(!token){
-          alert("ログインしてください");
-          setAuthUI(null);
-          return;
-        }
+/* ---------- 購入（仮） ---------- */
+$("buy").onclick = () => {
+  // 後でStripe Checkout URLに差し替え
+  window.open("https://note.com/", "_blank");
+};
 
-        const res = await fetch(FUNCTION_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + token
-          },
-          body: JSON.stringify({ text: userText })
-        });
+/* ---------- 初期化 ---------- */
+sb.auth.onAuthStateChange(refreshSession);
+refreshSession();
+</script>
 
-        const json = await res.json();
-
-        if(res.status === 402){
-          // チケット切れ（有料化の入口）
-          $("out").textContent = json?.error || "残り回数がありません。購入して続きが使えます。";
-          await loadTickets();
-          return;
-        }
-
-        if(!res.ok){
-          throw new Error(json?.error || "通信エラー");
-        }
-
-        $("out").textContent = json.reply || "（返答が空でした）";
-        await loadTickets();
-
-      }catch(e){
-        console.error(e);
-        $("out").textContent = "通信エラーが発生しました";
-      }finally{
-        $("state").textContent = "";
-      }
-    });
-
-    // ページ読み込み時：ログイン復元
-    sb.auth.onAuthStateChange((_event, _session) => refreshSession());
-    refreshSession();
-  </script>
 </body>
 </html>
