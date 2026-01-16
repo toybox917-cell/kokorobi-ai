@@ -115,7 +115,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_1MOnC3nmYzLMuswWc6qgvw_AaEjxE6W";
 const FUNCTION_URL =
   "https://jaxfvwzvhvbenrcrgduy.supabase.co/functions/v1/kokorobi-ai";
 
-// GitHub Pagesの index.html に戻す（ここ超重要）
+// GitHub Pagesの index.html に戻す（超重要）
 const EMAIL_REDIRECT_TO = "https://toybox917-cell.github.io/kokorobi-ai/index.html";
 /* =============================== */
 
@@ -133,7 +133,7 @@ function setAuthUI(user){
     $("btnLogout").disabled = false;
     $("uid").textContent = user.id;
 
-    // 残数が読み込めるまで一旦送信は止める（ここがコツ）
+    // 残数が読み込めるまで一旦送信は止める
     $("send").disabled = true;
   }else{
     $("authState").textContent = "未ログイン";
@@ -150,7 +150,6 @@ function setAuthUI(user){
 }
 
 function applyTicketGate(){
-  // 未ログイン中は何もしない
   if($("uid").textContent === "-") return;
 
   if(currentTickets <= 0){
@@ -236,7 +235,6 @@ $("send").onclick = async () => {
   const text = $("text").value.trim();
   if(!text) return;
 
-  // 残り0なら、ここでも二重で止める（フロントの保険）
   if(currentTickets <= 0){
     applyTicketGate();
     return;
@@ -244,6 +242,7 @@ $("send").onclick = async () => {
 
   $("state").textContent = "送信中…";
   $("send").disabled = true;
+  $("out").textContent = "";
 
   try{
     const { data:{ session } } = await sb.auth.getSession();
@@ -269,15 +268,23 @@ $("send").onclick = async () => {
 
     $("out").textContent = json.reply || "返答がありません";
 
-    // ここは「表示更新」だけ（消費処理をEdge側に入れたら自動で減る）
-    await loadTickets();
+    // ✅ もしFunctionが tickets_left を返すなら、即反映（DB再取得いらず）
+    if(typeof json.tickets_left === "number"){
+      currentTickets = json.tickets_left;
+      $("tickets").textContent = currentTickets;
+      applyTicketGate();
+    }else{
+      // 返ってこない場合は従来通りDBから読み直す
+      await loadTickets();
+    }
 
   }catch(e){
     console.error(e);
     $("out").textContent = "通信エラーが発生しました";
+    // エラー時は念のため再取得
+    await loadTickets();
   }finally{
     $("state").textContent = "";
-    // loadTickets() の結果でON/OFFされるけど念のため
     applyTicketGate();
   }
 };
